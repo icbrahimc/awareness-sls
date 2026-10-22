@@ -1,0 +1,35 @@
+---
+import { site, leadership, approach, values, goals } from '../data/site';
+
+const founders = leadership.map((person) => person.name).join(' and ');
+---
+
+<section id="about" class="section wrap" aria-labelledby="about-title">
+  <h2 id="about-title">About us</h2>
+  <div>
+    <p>
+      {site.name} was founded in {site.founded} in {site.hometown}, by {founders}, and is part of {site.legalName}.
+      We give each person the support they need to live in a home of their own, make informed choices and take
+      charge of their life.
+    </p>
+
+    <h3>What is supported living?</h3>
+    <p>
+      Supported living means adults with developmental or intellectual disabilities live in their own homes, with
+      support built around them. Our approach:
+    </p>
+    <ul>{approach.map((item) => <li>{item}</li>)}</ul>
+
+    <h3 id="values">Our values</h3>
+    <p>We believe you should be able to:</p>
+    <ul>{values.map((item) => <li>{item}</li>)}</ul>
+
+    <h3 id="goals">Our goals</h3>
+    <ol>{goals.map((item) => <li>{item}</li>)}</ol>
+
+    <h3>Leadership</h3>
+    <ul class="plain">
+      {leadership.map((person) => <li><strong>{person.name}</strong>, {person.title}</li>)}
+    </ul>
+  </div>
+</section>

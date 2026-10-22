@@ -1,0 +1,47 @@
+---
+import { site, nav, phoneHref } from '../data/site';
+---
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="#main">Awareness <span>SLS</span></a>
+    {site.phone && <a class="header-phone" href={phoneHref}>Call {site.phone}</a>}
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav id="site-nav" class="site-nav" aria-label="Primary">
+      <ul class="nav-list">
+        {nav.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        <li><a class="button" href="#contact">Contact Us</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector<HTMLElement>('.site-header');
+  const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
+  const nav = document.getElementById('site-nav');
+
+  if (header && toggle && nav) {
+    // CSS collapses the mobile menu only under .js, so if this script fails the menu stays expanded.
+    document.documentElement.classList.add('js');
+
+    const isOpen = () => nav.classList.contains('open');
+    const setOpen = (open: boolean) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      nav.classList.toggle('open', open);
+    };
+
+    toggle.addEventListener('click', () => setOpen(!isOpen()));
+    header.addEventListener('click', (event) => {
+      if ((event.target as Element).closest('a')) setOpen(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !isOpen()) return;
+      if (document.activeElement?.closest('input, select, textarea')) return;
+      setOpen(false);
+      toggle.focus();
+    });
+    // Must match the desktop breakpoint in global.css.
+    window.matchMedia('(min-width: 68em)').addEventListener('change', () => setOpen(false));
+  }
+</script>

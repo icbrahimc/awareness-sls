@@ -1,0 +1,14 @@
+---
+import { services, staffing } from '../data/site';
+---
+
+<section id="services" class="section wrap" aria-labelledby="services-title">
+  <h2 id="services-title">Services</h2>
+  <div>
+    <p>We plan your support with you, around your goals and routines.</p>
+    <ul>
+      {services.map((service) => <li><strong>{service.name}</strong>{service.note && `: ${service.note}`}</li>)}
+    </ul>
+    <p>{staffing}</p>
+  </div>
+</section>

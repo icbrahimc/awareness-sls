@@ -1,0 +1,185 @@
+---
+import { site, phoneHref, roles, confidentiality, FORM_ENDPOINT } from '../data/site';
+
+const towns = `${site.towns.slice(0, -1).join(', ')} and ${site.towns.at(-1)}`;
+---
+
+<section id="contact" class="section wrap" aria-labelledby="contact-title">
+  <div>
+    <h2 id="contact-title">Contact us</h2>
+    <p>Individuals, families, service coordinators and job seekers are all welcome.</p>
+    <address>
+      {site.phone && <p><strong>Phone</strong><br /><a href={phoneHref}>{site.phone}</a></p>}
+      <p><strong>Email</strong><br /><a href={`mailto:${site.email}`}>{site.email}</a></p>
+      <p><strong>Office</strong><br />{site.address}</p>
+      <p><strong>Hours</strong><br />Office: {site.officeHours}<br />Support services: {site.supportHours}</p>
+      <p><strong>Service area</strong><br />{site.serviceArea}, including {towns}.</p>
+    </address>
+  </div>
+
+  <form
+    id="contact-form"
+    name="contact"
+    action={FORM_ENDPOINT || `mailto:${site.email}`}
+    method="post"
+    enctype={FORM_ENDPOINT ? undefined : 'text/plain'}
+    data-endpoint={FORM_ENDPOINT}
+    data-email={site.email}
+    data-phone={site.phone || undefined}
+  >
+    <input type="hidden" name="form-name" value="contact" />
+    <p class="muted">{confidentiality}</p>
+    <p class="muted">All fields are required unless marked optional.</p>
+    <div class="field">
+      <label for="f-name">Name</label>
+      <input id="f-name" name="name" type="text" autocomplete="name" required aria-describedby="f-name-error" />
+      <p class="error" id="f-name-error"></p>
+    </div>
+    <div class="field">
+      <label for="f-email">Email</label>
+      <input id="f-email" name="email" type="email" autocomplete="email" required aria-describedby="f-email-error" />
+      <p class="error" id="f-email-error"></p>
+    </div>
+    <div class="field">
+      <label for="f-phone">Phone <span class="muted">(optional)</span></label>
+      <input id="f-phone" name="phone" type="tel" autocomplete="tel" aria-describedby="f-phone-error" />
+      <p class="error" id="f-phone-error"></p>
+    </div>
+    <div class="field">
+      <label for="f-role">I am a:</label>
+      <select id="f-role" name="role" required aria-describedby="f-role-error">
+        <option value="">Choose one</option>
+        {roles.map((role) => <option value={role.value}>{role.label}</option>)}
+      </select>
+      <p class="error" id="f-role-error"></p>
+    </div>
+    <div class="field">
+      <label for="f-message">Message</label>
+      <textarea id="f-message" name="message" rows="6" maxlength="2000" required aria-describedby="f-message-error"
+      ></textarea>
+      <p class="error" id="f-message-error"></p>
+    </div>
+    <button class="button" type="submit">Send message</button>
+    <p class="form-status" role="status"></p>
+  </form>
+</section>
+
+<script>
+  type Field = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+  const form = document.querySelector<HTMLFormElement>('#contact-form');
+
+  if (form) {
+    const status = form.querySelector<HTMLElement>('.form-status')!;
+    const submit = form.querySelector<HTMLButtonElement>('[type="submit"]')!;
+    const field = (name: string) => form.elements.namedItem(name) as Field;
+    const { email, phone } = form.dataset;
+    const reach = phone ? `email us at ${email} or call ${phone}` : `email us at ${email}`;
+    const checks: Record<string, (value: string) => string> = {
+      name: (v) => (v ? '' : 'Please enter your name.'),
+      email: (v) =>
+        !v
+          ? 'Please enter your email address.'
+          : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+            ? ''
+            : 'Please enter an email address like name@example.com.',
+      phone: (v) => {
+        const digits = v.replace(/\D/g, '');
+        const ok = !v || digits.length === 10 || (digits.length === 11 && digits.startsWith('1'));
+        return ok ? '' : 'Please enter a 10-digit phone number, or leave it blank.';
+      },
+      role: (v) => (v ? '' : 'Please choose the option that fits you best.'),
+      message: (v) => (v.length >= 10 ? '' : 'Please write a short message (at least 10 characters).'),
+    };
+
+    let sending = false;
+    let announceTimer: number | undefined;
+
+    // Emptying the live region first makes screen readers announce a repeated message again.
+    const announce = (message: string) => {
+      clearTimeout(announceTimer);
+      status.textContent = '';
+      announceTimer = window.setTimeout(() => (status.textContent = message), 100);
+    };
+
+    // aria-disabled instead of disabled, so keyboard focus is never stranded on a disabled button.
+    const setSending = (on: boolean) => {
+      sending = on;
+      submit.setAttribute('aria-disabled', String(on));
+    };
+
+    const validate = (input: Field) => {
+      const error = checks[input.name](input.value.trim());
+      input.setAttribute('aria-invalid', String(Boolean(error)));
+      document.getElementById(`${input.id}-error`)!.textContent = error;
+      return !error;
+    };
+
+    form.noValidate = true;
+    form.addEventListener('input', (event) => {
+      const input = event.target as Field;
+      if (input.getAttribute('aria-invalid') === 'true') validate(input);
+    });
+
+    document.querySelectorAll<HTMLAnchorElement>('a[data-role]').forEach((link) => {
+      link.addEventListener('click', () => {
+        const role = field('role');
+        if (role.value) return;
+        role.value = link.dataset.role!;
+        role.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (sending) return;
+
+      const invalid = Object.keys(checks).map(field).filter((input) => !validate(input));
+      if (invalid.length) {
+        announce(`Please fix the ${invalid.length === 1 ? 'field' : `${invalid.length} fields`} marked above.`);
+        invalid[0].focus();
+        return;
+      }
+
+      const endpoint = form.dataset.endpoint;
+      const value = (name: string) => field(name).value.trim();
+
+      if (!endpoint) {
+        const role = field('role') as HTMLSelectElement;
+        const body = [
+          `Name: ${value('name')}`,
+          `Email: ${value('email')}`,
+          `Phone: ${value('phone') || 'not given'}`,
+          `I am a: ${role.selectedOptions[0].text}`,
+          '',
+          value('message'),
+        ].join('\r\n');
+        const subject = `Website message from ${value('name')}`;
+        window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        announce(`Your email app should now open with your message. If it doesn't, ${reach}.`);
+        // A short lockout stops repeat clicks from opening several email drafts.
+        setSending(true);
+        window.setTimeout(() => setSending(false), 4000);
+        return;
+      }
+
+      setSending(true);
+      announce('Sending…');
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { Accept: 'application/json' },
+          signal: AbortSignal.timeout(15000),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        form.reset();
+        announce('Thank you. Your message was sent, and we will be in touch soon.');
+      } catch {
+        announce(`Sorry, your message could not be sent. Please ${reach}.`);
+      } finally {
+        setSending(false);
+      }
+    });
+  }
+</script>

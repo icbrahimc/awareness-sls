@@ -1,0 +1,19 @@
+---
+import { careers } from '../data/site';
+---
+
+<section id="careers" class="section wrap" aria-labelledby="careers-title">
+  <h2 id="careers-title">Careers</h2>
+  <div>
+    <p>
+      Join our team as an {careers.role}. Help adults live the lives they choose, at home and in their community,
+      with respect for their choices and dignity.
+    </p>
+    <h3>Requirements</h3>
+    <ul>{careers.requirements.map((item) => <li>{item}</li>)}</ul>
+    <p>{careers.plus}</p>
+    <div class="actions">
+      <a class="button" href="#contact" data-role="job-seeker">Contact us about jobs</a>
+    </div>
+  </div>
+</section>

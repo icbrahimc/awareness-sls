@@ -1,0 +1,31 @@
+---
+import { eligibility, whoWeServe, experience, steps, confidentiality } from '../data/site';
+---
+
+<section id="who-we-serve" class="section wrap" aria-labelledby="who-title">
+  <h2 id="who-title">Who we serve</h2>
+  <div>
+    <p>{eligibility} We welcome:</p>
+    <ul>{whoWeServe.map((item) => <li>{item}</li>)}</ul>
+    <p>{experience}</p>
+
+    <h3 id="partnership">Working with your regional center</h3>
+    <p>
+      Alta California Regional Center (ACRC) has long led the self-advocacy movement. We work alongside each
+      person's regional center service coordinator and planning team to build individualized support.
+    </p>
+    <p>
+      Your Individual Program Plan (IPP) with the regional center recommends supported living. Your ISP with us
+      spells out your day-to-day support, and you take part in shaping it.
+    </p>
+
+    <h3 id="getting-started">Getting started</h3>
+    <ol>{steps.map((step) => <li><strong>{step.title}</strong> {step.text}</li>)}</ol>
+    <p class="muted">{confidentiality}</p>
+
+    <div class="actions">
+      <a class="button" href="#contact" data-role="coordinator">Send a referral</a>
+      <a class="button button--quiet" href="#contact" data-role="individual-family">Request Services</a>
+    </div>
+  </div>
+</section>
